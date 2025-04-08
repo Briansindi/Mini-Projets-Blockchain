@@ -1,0 +1,294 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "id",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					}
+				],
+				"name": "ResolutionCreated",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "resolutionId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "voter",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum VoteAG.VoteChoice",
+						"name": "choice",
+						"type": "uint8"
+					}
+				],
+				"name": "Voted",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "participant",
+						"type": "address"
+					}
+				],
+				"name": "addToWhitelist",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_title",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_president",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_scrutateur",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_secretaire",
+						"type": "address"
+					}
+				],
+				"name": "createResolution",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "resolutionId",
+						"type": "uint256"
+					}
+				],
+				"name": "getResults",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "president",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "pour",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "contre",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "neutre",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "participant",
+						"type": "address"
+					}
+				],
+				"name": "isWhitelisted",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "participant",
+						"type": "address"
+					}
+				],
+				"name": "removeFromWhitelist",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "resolutionCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "resolutionId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "enum VoteAG.VoteChoice",
+						"name": "choice",
+						"type": "uint8"
+					}
+				],
+				"name": "vote",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "whitelist",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"VoteAG.sol": "VoteAG"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"Ownable.sol": {
+			"keccak256": "0x6933a4b5463ca342c13f7314f4278fd2890aabb1406d120cad9b2477fb6fe00b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://271d257598818d3260a4bcd1bdfb2206341809ba61318342643dd8cb3af2e59b",
+				"dweb:/ipfs/QmXcC7sFpXAHCaSR3qWSDykDZyaJia6z2vHnogAruaTiT9"
+			]
+		},
+		"VoteAG.sol": {
+			"keccak256": "0x356520f5b2d2f1c864d6e4c12116bacb620dae75ec9228b13df83744924ad4ff",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6ba03d43ab71192e66e2e7c6c82b1d95415dad352cf6e710de6c8415e1fd751c",
+				"dweb:/ipfs/QmeL7Y8pwephJY8qAw5mbT1iVMB2KVaFTkzMKRuFugQ3WN"
+			]
+		},
+		"Whitelist.sol": {
+			"keccak256": "0xe95d9d2aa7d2faa132e900e370df2208395f42dae74c5c0ee1739e3f7d158d68",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6ab828b7f0080f5de368ed841a08590da85d04967d08bd20a3d7063afebda688",
+				"dweb:/ipfs/QmRUDhTLGMNLyWc1zVoNSwjEwKVctnzJM8DnX8BgLU1Uag"
+			]
+		}
+	},
+	"version": 1
+}
