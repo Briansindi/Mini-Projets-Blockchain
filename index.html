@@ -309,7 +309,7 @@
 
   <script>
     const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
- const contractABI = [
+	const contractABI = [
   // Fonction pour voter
   {
     "inputs": [
@@ -377,6 +377,7 @@
     "type": "function"
   }
 ];
+
     // Configuration du réseau Sepolia
     const sepoliaConfig = {
       chainId: "0xaa36a7", // 11155111 en hexa
@@ -392,100 +393,135 @@
 
     let provider, signer, contract;
 
-   async function getResults() {
+    async function connectWallet() {
+      try {
+        if (window.ethereum) {
+          // Vérifier si on est sur Sepolia, sinon demander le switch
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          const network = await provider.getNetwork();
+          
+          if (network.chainId !== 11155111) { // ID de Sepolia
+            try {
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: sepoliaConfig.chainId }],
+              });
+            } catch (switchError) {
+              // Si le réseau n'est pas ajouté dans MetaMask, l'ajouter
+              if (switchError.code === 4902) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [sepoliaConfig],
+                });
+              } else {
+                throw switchError;
+              }
+            }
+          }
+          
+          await provider.send("eth_requestAccounts", []);
+          signer = provider.getSigner();
+          const account = await signer.getAddress();
+          const accountDisplay = document.getElementById("accountDisplay");
+          accountDisplay.innerText = `Connecté en tant que: ${account.substring(0, 6)}...${account.substring(38)}`;
+          accountDisplay.classList.remove("error");
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+        } else {
+          throw new Error("Installez MetaMask pour utiliser cette application.");
+        }
+      } catch (err) {
+        const accountDisplay = document.getElementById("accountDisplay");
+        accountDisplay.innerText = "Erreur: " + err.message;
+        accountDisplay.classList.add("error");
+      }
+    }
+
+    async function voteResolution() {
+      const id = document.getElementById("resolutionId").value;
+      const choice = document.getElementById("voteChoice").value;
+      const voteStatus = document.getElementById("voteStatus");
+      
+      if (!id) {
+        voteStatus.innerText = "Veuillez entrer un ID de résolution";
+        voteStatus.classList.add("error");
+        return;
+      }
+      
+      try {
+        voteStatus.innerText = "Envoi du vote...";
+        voteStatus.classList.remove("error");
+        
+        const tx = await contract.vote(id, choice);
+        await tx.wait();
+        
+        voteStatus.innerText = "Vote soumis avec succès!";
+        voteStatus.classList.remove("error");
+      } catch (err) {
+        voteStatus.innerText = "Erreur: " + (err.message || "Une erreur est survenue");
+        voteStatus.classList.add("error");
+      }
+    }
+
+	async function getResults() {
   const id = document.getElementById("resultId").value;
   const resultsOutput = document.getElementById("resultsOutput");
-
-  // Vérification initiale
-  if (!id || isNaN(id)) {
-    showError(resultsOutput, "Veuillez entrer un ID numérique valide");
+  
+  if (!id) {
+    resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
+    resultsOutput.classList.add("error");
     return;
   }
 
   try {
-    // Vérification de la connexion et du contrat
-    if (!window.ethereum) {
-      showError(resultsOutput, "MetaMask n'est pas installé");
-      return;
-    }
-
+    // Vérifiez que le contrat est initialisé
     if (!contract) {
-      showError(resultsOutput, "Veuillez d'abord connecter votre wallet");
-      return;
+      throw new Error("Connectez d'abord votre wallet");
     }
 
-    // Vérification du réseau
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if (chainId !== '0xaa36a7') { // Sepolia
-      showError(resultsOutput, "Veuillez vous connecter au réseau Sepolia");
-      return;
-    }
-
-    // Vérification de l'existence de la résolution
-    try {
-      const exists = await contract.resolutionExists(id);
-      if (!exists) {
-        showError(resultsOutput, `Aucune résolution trouvée avec l'ID ${id}`);
-        return;
-      }
-    } catch (err) {
-      console.error("Erreur de vérification:", err);
-      showError(resultsOutput, "Impossible de vérifier l'existence de la résolution");
-      return;
-    }
-
-    // Récupération des résultats
-    resultsOutput.innerText = "⏳ Chargement des résultats...";
+    resultsOutput.innerText = "Chargement des résultats...";
     resultsOutput.classList.remove("error");
 
-    const res = await contract.getResults(id);
+    // Ajoutez des logs pour débogage
+    console.log("Tentative de récupération des résultats pour ID:", id);
     
-    if (!res || res.length !== 5) {
-      showError(resultsOutput, "Format de réponse inattendu");
-      return;
+    // Appel avec gestion d'erreur améliorée
+    const res = await contract.getResults(id).catch(err => {
+      console.error("Erreur détaillée:", err);
+      throw new Error(`Échec de la récupération: ${err.reason || err.message}`);
+    });
+
+    if (!res || res.length < 5) {
+      throw new Error("Format de réponse inattendu");
     }
 
-    // Affichage formaté des résultats
     const [title, president, pour, contre, neutre] = res;
-    resultsOutput.innerHTML = `
-      <strong>📋 Titre:</strong> ${title || "Non spécifié"}<br><br>
-      <strong>👤 Président:</strong> ${formatAddress(president)}<br><br>
-      <strong>📊 Résultats:</strong><br>
-      ✅ <strong>POUR:</strong> ${pour}<br>
-      ❌ <strong>CONTRE:</strong> ${contre}<br>
-      ➖ <strong>NEUTRE:</strong> ${neutre}
-    `;
+    
+    resultsOutput.innerText =
+      `Titre: ${title || "Non spécifié"}\n` +
+      `Président: ${president || "Non défini"}\n\n` +
+      `Votes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
+    
     resultsOutput.classList.remove("error");
 
   } catch (err) {
     console.error("Erreur complète:", err);
-    handleSpecificErrors(err, resultsOutput);
+    
+    let errorMsg = "Erreur inattendue";
+    if (err.reason) {
+      // Erreur venant du contrat
+      errorMsg = err.reason;
+    } else if (err.message.includes("resolution does not exist")) {
+      errorMsg = "Cette résolution n'existe pas";
+    } else if (err.message.includes("CALL_EXCEPTION")) {
+      errorMsg = "Impossible de lire les résultats - vérifiez l'ID";
+    } else {
+      errorMsg = err.message;
+    }
+
+    resultsOutput.innerText = `Erreur: ${errorMsg}`;
+    resultsOutput.classList.add("error");
   }
-}
-
-// Fonctions utilitaires
-function showError(element, message) {
-  element.innerHTML = `❌ ${message}`;
-  element.classList.add("error");
-}
-
-function formatAddress(address) {
-  return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "Non défini";
-}
-
-function handleSpecificErrors(err, outputElement) {
-  let errorMessage = "Erreur lors de la récupération";
-  
-  if (err.code === 'CALL_EXCEPTION') {
-    errorMessage = "Le contrat a rejeté la requête (ID invalide ou problème de permission)";
-  } else if (err.message.includes('resolution does not exist')) {
-    errorMessage = "Cette résolution n'existe pas";
-  } else if (err.message.includes('Network changed')) {
-    errorMessage = "Le réseau a changé, veuillez rafraîchir la page";
-  }
-
-  showError(outputElement, errorMessage);
-}
+    }
   </script>
 </body>
 </html>
