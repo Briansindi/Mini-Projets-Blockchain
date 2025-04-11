@@ -1,323 +1,623 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vote AG - Blockchain</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
   <style>
-    body { font-family: sans-serif; margin: 2rem; background: #f4f4f4; }
-    h1 { color: #333; }
-    .section { background: #fff; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
-    input, button, select { margin: 0.5rem 0; padding: 0.5rem; width: 100%; }
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a56d4;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --danger: #f72585;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --border-radius: 12px;
+      --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      color: var(--dark);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      animation: fadeIn 0.8s ease;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #4361ee, #3f37c9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 1.5rem;
+      position: relative;
+      display: inline-block;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: var(--success);
+      border-radius: 3px;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+      animation: slideUp 0.6s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--gray);
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e0e0e0;
+      border-radius: var(--border-radius);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+    
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    #accountDisplay {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      background: #edf2ff;
+      border-radius: var(--border-radius);
+      color: var(--primary);
+      font-weight: 500;
+      border-left: 4px solid var(--primary);
+    }
+    
+    #voteStatus, #resultsOutput {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      font-size: 0.9rem;
+    }
+    
+    #voteStatus {
+      background: #e6fcf5;
+      color: #0ca678;
+      border-left: 4px solid #0ca678;
+    }
+    
+    #resultsOutput {
+      background: #f3f0ff;
+      color: var(--secondary);
+      border-left: 4px solid var(--secondary);
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .error {
+      background: #fff0f3 !important;
+      color: var(--danger) !important;
+      border-left: 4px solid var(--danger) !important;
+    }
+    
+    .metamask-icon {
+      width: 20px;
+      height: 20px;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Vote en Assemblée Générale (Blockchain)</h1>
-
-  <div class="section">
-    <h2>Connecter votre wallet</h2>
-    <button onclick="connectWallet()">Se connecter à MetaMask</button>
-    <p id="accountDisplay"></p>
-  </div>
-
-  <div class="section">
-    <h2>Voter sur une résolution</h2>
-    <label>Identifiant de la résolution :</label>
-    <input type="number" id="resolutionId" />
-    <label>Choix :</label>
-    <select id="voteChoice">
-      <option value="0">POUR</option>
-      <option value="1">CONTRE</option>
-      <option value="2">NEUTRE</option>
-    </select>
-    <button onclick="voteResolution()">Voter</button>
-    <p id="voteStatus"></p>
-  </div>
-
-  <div class="section">
-    <h2>Voir les résultats</h2>
-    <label>Identifiant de la résolution :</label>
-    <input type="number" id="resultId" />
-    <button onclick="getResults()">Afficher les résultats</button>
-    <pre id="resultsOutput"></pre>
+  <div class="container">
+    <header>
+      <h1>Vote en Assemblée Générale</h1>
+      <p>Plateforme de vote sécurisée par blockchain</p>
+    </header>
+    
+    <div class="grid">
+      <div class="card">
+        <h2>Connecter votre wallet</h2>
+        <button onclick="connectWallet()">
+          <svg class="metamask-icon" viewBox="0 0 212 189" xmlns="http://www.w3.org/2000/svg">
+            <path d="M176.7 0L160 17.3l-18.7-4-6.6 13.3-13.4-2.7-8 16-16-5.3-10.6 10.6-12-8-12 8-10.6-10.6-16 5.3-8-16-13.4 2.7-6.6-13.3-18.7 4L0 17.3 0 0z" fill="#E2761B"/>
+            <path d="M176.7 0L160 17.3v16l10.7 32h16l5.3-37.3z" fill="#E4761B"/>
+            <path d="M52 17.3L35.3 0 20 28h16l10.7-32z" fill="#E4761B"/>
+            <path d="M160 17.3l-10.7 32h16l10.6-32z" fill="#E4761B"/>
+            <path d="M52 17.3l10.7 32H46L35.3 17.3z" fill="#E4761B"/>
+            <path d="M176.7 0L160 17.3v16l10.7 32h16l5.3-37.3z" fill="#E4761B"/>
+            <path d="M52 17.3L35.3 0 20 28h16l10.7-32z" fill="#E4761B"/>
+            <path d="M160 17.3l-10.7 32h16l10.6-32z" fill="#E4761B"/>
+            <path d="M52 17.3l10.7 32H46L35.3 17.3z" fill="#E4761B"/>
+            <path d="M106.7 64L93.3 80l-2.6-37.3-10.7-10.7H132l-10.7 10.7-2.6 37.3z" fill="#E4761B"/>
+            <path d="M106.7 64L93.3 80l-2.6-37.3-10.7-10.7H132l-10.7 10.7-2.6 37.3z" fill="#E4761B"/>
+            <path d="M176.7 65.3L160 80l2.7 37.3 16 48-21.3-16-16 21.3 10.6 10.7 21.4-21.3 21.3 21.3 10.7-10.7-16-21.3-21.3 16 16-48 2.7-37.3z" fill="#E4761B"/>
+            <path d="M176.7 65.3L160 80l2.7 37.3 16 48-21.3-16-16 21.3 10.6 10.7 21.4-21.3 21.3 21.3 10.7-10.7-16-21.3-21.3 16 16-48 2.7-37.3z" fill="#E4761B"/>
+            <path d="M35.3 65.3L52 80l-2.7 37.3-16 48 21.3-16 16 21.3L58.7 181 37.3 160 16 181l10.7 10.7-16-21.3-21.3 16 16-48-2.7-37.3z" fill="#E4761B"/>
+            <path d="M35.3 65.3L52 80l-2.7 37.3-16 48 21.3-16 16 21.3L58.7 181 37.3 160 16 181l10.7 10.7-16-21.3-21.3 16 16-48-2.7-37.3z" fill="#E4761B"/>
+            <path d="M106.7 64L93.3 80l-2.6 37.3L93.3 160l10.7 21.3 5.3-53.3 2.7-64z" fill="#E4761B"/>
+            <path d="M106.7 64L93.3 80l-2.6 37.3L93.3 160l10.7 21.3 5.3-53.3 2.7-64z" fill="#E4761B"/>
+            <path d="M106.7 64L120 80l2.7 37.3L120 160l-10.7 21.3-5.3-53.3-2.7-64z" fill="#E4761B"/>
+            <path d="M106.7 64L120 80l2.7 37.3L120 160l-10.7 21.3-5.3-53.3-2.7-64z" fill="#E4761B"/>
+          </svg>
+          Se connecter à MetaMask
+        </button>
+        <p id="accountDisplay"></p>
+      </div>
+      
+      <div class="card">
+        <h2>Voter sur une résolution</h2>
+        <label>Identifiant de la résolution :</label>
+        <input type="number" id="resolutionId" placeholder="Entrez l'ID de la résolution" />
+        <label>Choix :</label>
+        <select id="voteChoice">
+          <option value="0">POUR</option>
+          <option value="1">CONTRE</option>
+          <option value="2">NEUTRE</option>
+        </select>
+        <button onclick="voteResolution()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+          </svg>
+          Soumettre mon vote
+        </button>
+        <p id="voteStatus"></p>
+      </div>
+      
+      <div class="card">
+        <h2>Voir les résultats</h2>
+        <label>Identifiant de la résolution :</label>
+        <input type="number" id="resultId" placeholder="Entrez l'ID de la résolution" />
+        <button onclick="getResults()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+          </svg>
+          Afficher les résultats
+        </button>
+        <pre id="resultsOutput"></pre>
+      </div>
+    </div>
+    
+    <footer>
+      <p>Plateforme de vote sécurisée par blockchain Ethereum - © 2023</p>
+    </footer>
   </div>
 
   <script>
-    const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3"; // Remplacer par l'adresse après déploiement
+    const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
     const contractABI = [
-     [
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "title",
-				"type": "string"
-			}
-		],
-		"name": "ResolutionCreated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "resolutionId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "voter",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "enum VoteAG.VoteChoice",
-				"name": "choice",
-				"type": "uint8"
-			}
-		],
-		"name": "Voted",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "participant",
-				"type": "address"
-			}
-		],
-		"name": "addToWhitelist",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_title",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "_president",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_scrutateur",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "_secretaire",
-				"type": "address"
-			}
-		],
-		"name": "createResolution",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "resolutionId",
-				"type": "uint256"
-			}
-		],
-		"name": "getResults",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "title",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "president",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "pour",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "contre",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "neutre",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "participant",
-				"type": "address"
-			}
-		],
-		"name": "isWhitelisted",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "participant",
-				"type": "address"
-			}
-		],
-		"name": "removeFromWhitelist",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "resolutionCount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "resolutionId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "enum VoteAG.VoteChoice",
-				"name": "choice",
-				"type": "uint8"
-			}
-		],
-		"name": "vote",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "whitelist",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
+      [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            }
+          ],
+          "name": "ResolutionCreated",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "resolutionId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "voter",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "enum VoteAG.VoteChoice",
+              "name": "choice",
+              "type": "uint8"
+            }
+          ],
+          "name": "Voted",
+          "type": "event"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "participant",
+              "type": "address"
+            }
+          ],
+          "name": "addToWhitelist",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "_title",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "_president",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_scrutateur",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_secretaire",
+              "type": "address"
+            }
+          ],
+          "name": "createResolution",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "resolutionId",
+              "type": "uint256"
+            }
+          ],
+          "name": "getResults",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "president",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pour",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "contre",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "neutre",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "participant",
+              "type": "address"
+            }
+          ],
+          "name": "isWhitelisted",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "participant",
+              "type": "address"
+            }
+          ],
+          "name": "removeFromWhitelist",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "resolutionCount",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "transferOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "resolutionId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum VoteAG.VoteChoice",
+              "name": "choice",
+              "type": "uint8"
+            }
+          ],
+          "name": "vote",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "whitelist",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      ]
     ];
 
     let provider, signer, contract;
 
     async function connectWallet() {
-      if (window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        const account = await signer.getAddress();
-        document.getElementById("accountDisplay").innerText = "Connecté en tant que: " + account;
-        contract = new ethers.Contract(contractAddress, contractABI, signer);
-      } else {
-        alert("Installez MetaMask pour utiliser cette application.");
+      try {
+        if (window.ethereum) {
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.send("eth_requestAccounts", []);
+          signer = provider.getSigner();
+          const account = await signer.getAddress();
+          const accountDisplay = document.getElementById("accountDisplay");
+          accountDisplay.innerText = `Connecté en tant que: ${account.substring(0, 6)}...${account.substring(38)}`;
+          accountDisplay.classList.remove("error");
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+        } else {
+          throw new Error("Installez MetaMask pour utiliser cette application.");
+        }
+      } catch (err) {
+        const accountDisplay = document.getElementById("accountDisplay");
+        accountDisplay.innerText = "Erreur: " + err.message;
+        accountDisplay.classList.add("error");
       }
     }
 
     async function voteResolution() {
       const id = document.getElementById("resolutionId").value;
       const choice = document.getElementById("voteChoice").value;
+      const voteStatus = document.getElementById("voteStatus");
+      
+      if (!id) {
+        voteStatus.innerText = "Veuillez entrer un ID de résolution";
+        voteStatus.classList.add("error");
+        return;
+      }
+      
       try {
+        voteStatus.innerText = "Envoi du vote...";
+        voteStatus.classList.remove("error");
+        
         const tx = await contract.vote(id, choice);
         await tx.wait();
-        document.getElementById("voteStatus").innerText = "Vote soumis avec succès!";
+        
+        voteStatus.innerText = "Vote soumis avec succès!";
+        voteStatus.classList.remove("error");
       } catch (err) {
-        document.getElementById("voteStatus").innerText = "Erreur: " + err.message;
+        voteStatus.innerText = "Erreur: " + (err.message || "Une erreur est survenue");
+        voteStatus.classList.add("error");
       }
     }
 
     async function getResults() {
       const id = document.getElementById("resultId").value;
+      const resultsOutput = document.getElementById("resultsOutput");
+      
+      if (!id) {
+        resultsOutput.innerText = "Veuillez entrer un ID de résolution";
+        resultsOutput.classList.add("error");
+        return;
+      }
+      
       try {
+        resultsOutput.innerText = "Chargement des résultats...";
+        resultsOutput.classList.remove("error");
+        
         const res = await contract.getResults(id);
         const [title, president, pour, contre, neutre] = res;
-        document.getElementById("resultsOutput").innerText =
-          `Titre: ${title}\nPresident: ${president}\nPOUR: ${pour}\nCONTRE: ${contre}\nNEUTRE: ${neutre}`;
+        
+        resultsOutput.innerText =
+          `Titre: ${title}\nPrésident: ${president}\n\nVotes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
+        resultsOutput.classList.remove("error");
       } catch (err) {
-        document.getElementById("resultsOutput").innerText = "Erreur: " + err.message;
+        resultsOutput.innerText = "Erreur: " + (err.message || "Impossible de charger les résultats");
+        resultsOutput.classList.add("error");
       }
     }
   </script>
