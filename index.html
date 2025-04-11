@@ -353,25 +353,52 @@
     }
 
     async function getResults() {
-      const id = document.getElementById("resultId").value;
-      const resultsOutput = document.getElementById("resultsOutput");
-      resultsOutput.innerText = "";
+  const id = document.getElementById("resultId").value;
+  const resultsOutput = document.getElementById("resultsOutput");
 
-      if (!id) {
-        resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
-        resultsOutput.classList.add("error");
-        return;
-      }
-      try {
-        const res = await contract.getResults(id);
-        const [title, president, pour, contre, neutre] = res;
-        resultsOutput.innerText = `Titre: ${title}\nPrésident: ${president}\nPOUR: ${pour}\nCONTRE: ${contre}\nNEUTRE: ${neutre}`;
-        resultsOutput.classList.remove("error");
-      } catch (err) {
-        resultsOutput.innerText = `Erreur: Impossible de lire les résultats - vérifiez l'ID (${err.message})`;
-        resultsOutput.classList.add("error");
-      }
+  if (!id) {
+    resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
+    resultsOutput.classList.add("error");
+    return;
+  }
+
+  try {
+    if (!contract) {
+      throw new Error("Connectez d'abord votre wallet");
     }
+
+    // 🔍 Vérifie si la résolution existe
+    const exists = await contract.resolutionExists(id);
+    if (!exists) {
+      throw new Error("Cette résolution n'existe pas");
+    }
+
+    resultsOutput.innerText = "Chargement des résultats...";
+    resultsOutput.classList.remove("error");
+
+    const [title, president, pour, contre, neutre] = await contract.getResults(id);
+
+    resultsOutput.innerText =
+      `Titre: ${title || "Non spécifié"}\n` +
+      `Président: ${president || "Non défini"}\n\n` +
+      `Votes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
+    
+    resultsOutput.classList.remove("error");
+
+  } catch (err) {
+    let errorMsg = "Erreur inattendue";
+    if (err.message.includes("résolution n'existe")) {
+      errorMsg = "Cette résolution n'existe pas";
+    } else if (err.message.includes("CALL_EXCEPTION")) {
+      errorMsg = "Impossible de lire les résultats - vérifiez l'ID";
+    } else {
+      errorMsg = err.message;
+    }
+
+    resultsOutput.innerText = `Erreur: ${errorMsg}`;
+    resultsOutput.classList.add("error");
+  }
+}
 
     async function loadAvailableResolutions() {
       const list = document.getElementById("availableResolutions");
