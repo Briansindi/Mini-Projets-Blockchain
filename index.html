@@ -236,7 +236,7 @@
   <div class="container">
     <header>
       <h1>Vote en Assemblée Générale</h1>
-      <p>Plateforme de vote sécurisée par blockchain</p>
+      <p>Plateforme de vote sécurisée par blockchain (Sepolia)</p>
     </header>
     
     <div class="grid">
@@ -303,23 +303,58 @@
     </div>
     
     <footer>
-      <p>Plateforme de vote sécurisée par blockchain Ethereum - © 2023</p>
+      <p>Plateforme de vote sécurisée par blockchain Ethereum (Sepolia) - © 2023</p>
     </footer>
   </div>
 
   <script>
-    const contractAddress = "0xD4Fc541236927E2EAf8F27606bD7309C1Fc2cbee";
+    const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
     const contractABI = [
       "function vote(uint256 resolutionId, uint8 choice) public",
       "function getResults(uint256 resolutionId) public view returns (string memory, address, uint256, uint256, uint256)"
     ];
+
+    // Configuration du réseau Sepolia
+    const sepoliaConfig = {
+      chainId: "0xaa36a7", // 11155111 en hexa
+      chainName: "Sepolia",
+      nativeCurrency: {
+        name: "Sepolia Ether",
+        symbol: "ETH",
+        decimals: 18
+      },
+      rpcUrls: ["https://rpc.sepolia.org"],
+      blockExplorerUrls: ["https://sepolia.etherscan.io"]
+    };
 
     let provider, signer, contract;
 
     async function connectWallet() {
       try {
         if (window.ethereum) {
+          // Vérifier si on est sur Sepolia, sinon demander le switch
           provider = new ethers.providers.Web3Provider(window.ethereum);
+          const network = await provider.getNetwork();
+          
+          if (network.chainId !== 11155111) { // ID de Sepolia
+            try {
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: sepoliaConfig.chainId }],
+              });
+            } catch (switchError) {
+              // Si le réseau n'est pas ajouté dans MetaMask, l'ajouter
+              if (switchError.code === 4902) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [sepoliaConfig],
+                });
+              } else {
+                throw switchError;
+              }
+            }
+          }
+          
           await provider.send("eth_requestAccounts", []);
           signer = provider.getSigner();
           const account = await signer.getAddress();
