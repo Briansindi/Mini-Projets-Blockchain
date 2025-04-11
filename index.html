@@ -372,56 +372,65 @@
       }
     }
 
-    async function voteResolution() {
-      const id = document.getElementById("resolutionId").value;
-      const choice = document.getElementById("voteChoice").value;
-      const voteStatus = document.getElementById("voteStatus");
-      
-      if (!id) {
-        voteStatus.innerText = "Veuillez entrer un ID de résolution";
-        voteStatus.classList.add("error");
-        return;
-      }
-      
-      try {
-        voteStatus.innerText = "Envoi du vote...";
-        voteStatus.classList.remove("error");
-        
-        const tx = await contract.vote(id, choice);
-        await tx.wait();
-        
-        voteStatus.innerText = "Vote soumis avec succès!";
-        voteStatus.classList.remove("error");
-      } catch (err) {
-        voteStatus.innerText = "Erreur: " + (err.message || "Une erreur est survenue");
-        voteStatus.classList.add("error");
-      }
+    async function getResults() {
+  const id = document.getElementById("resultId").value;
+  const resultsOutput = document.getElementById("resultsOutput");
+  
+  if (!id) {
+    resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
+    resultsOutput.classList.add("error");
+    return;
+  }
+
+  try {
+    // Vérifiez que le contrat est initialisé
+    if (!contract) {
+      throw new Error("Connectez d'abord votre wallet");
     }
 
-    async function getResults() {
-      const id = document.getElementById("resultId").value;
-      const resultsOutput = document.getElementById("resultsOutput");
-      
-      if (!id) {
-        resultsOutput.innerText = "Veuillez entrer un ID de résolution";
-        resultsOutput.classList.add("error");
-        return;
-      }
-      
-      try {
-        resultsOutput.innerText = "Chargement des résultats...";
-        resultsOutput.classList.remove("error");
-        
-        const res = await contract.getResults(id);
-        const [title, president, pour, contre, neutre] = res;
-        
-        resultsOutput.innerText =
-          `Titre: ${title}\nPrésident: ${president}\n\nVotes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
-        resultsOutput.classList.remove("error");
-      } catch (err) {
-        resultsOutput.innerText = "Erreur: " + (err.message || "Impossible de charger les résultats");
-        resultsOutput.classList.add("error");
-      }
+    resultsOutput.innerText = "Chargement des résultats...";
+    resultsOutput.classList.remove("error");
+
+    // Ajoutez des logs pour débogage
+    console.log("Tentative de récupération des résultats pour ID:", id);
+    
+    // Appel avec gestion d'erreur améliorée
+    const res = await contract.getResults(id).catch(err => {
+      console.error("Erreur détaillée:", err);
+      throw new Error(`Échec de la récupération: ${err.reason || err.message}`);
+    });
+
+    if (!res || res.length < 5) {
+      throw new Error("Format de réponse inattendu");
+    }
+
+    const [title, president, pour, contre, neutre] = res;
+    
+    resultsOutput.innerText =
+      `Titre: ${title || "Non spécifié"}\n` +
+      `Président: ${president || "Non défini"}\n\n` +
+      `Votes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
+    
+    resultsOutput.classList.remove("error");
+
+  } catch (err) {
+    console.error("Erreur complète:", err);
+    
+    let errorMsg = "Erreur inattendue";
+    if (err.reason) {
+      // Erreur venant du contrat
+      errorMsg = err.reason;
+    } else if (err.message.includes("resolution does not exist")) {
+      errorMsg = "Cette résolution n'existe pas";
+    } else if (err.message.includes("CALL_EXCEPTION")) {
+      errorMsg = "Impossible de lire les résultats - vérifiez l'ID";
+    } else {
+      errorMsg = err.message;
+    }
+
+    resultsOutput.innerText = `Erreur: ${errorMsg}`;
+    resultsOutput.classList.add("error");
+  }
     }
   </script>
 </body>
