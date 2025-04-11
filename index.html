@@ -392,103 +392,99 @@
 
     let provider, signer, contract;
 
-    async function connectWallet() {
-      try {
-        if (window.ethereum) {
-          // Vérifier si on est sur Sepolia, sinon demander le switch
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          const network = await provider.getNetwork();
-          
-          if (network.chainId !== 11155111) { // ID de Sepolia
-            try {
-              await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: sepoliaConfig.chainId }],
-              });
-            } catch (switchError) {
-              // Si le réseau n'est pas ajouté dans MetaMask, l'ajouter
-              if (switchError.code === 4902) {
-                await window.ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [sepoliaConfig],
-                });
-              } else {
-                throw switchError;
-              }
-            }
-          }
-          
-          await provider.send("eth_requestAccounts", []);
-          signer = provider.getSigner();
-          const account = await signer.getAddress();
-          const accountDisplay = document.getElementById("accountDisplay");
-          accountDisplay.innerText = `Connecté en tant que: ${account.substring(0, 6)}...${account.substring(38)}`;
-          accountDisplay.classList.remove("error");
-          contract = new ethers.Contract(contractAddress, contractABI, signer);
-        } else {
-          throw new Error("Installez MetaMask pour utiliser cette application.");
-        }
-      } catch (err) {
-        const accountDisplay = document.getElementById("accountDisplay");
-        accountDisplay.innerText = "Erreur: " + err.message;
-        accountDisplay.classList.add("error");
-      }
-    }
-
    async function getResults() {
   const id = document.getElementById("resultId").value;
   const resultsOutput = document.getElementById("resultsOutput");
-  
+
+  // Vérification initiale
   if (!id || isNaN(id)) {
-    resultsOutput.innerText = "Veuillez entrer un ID numérique valide";
-    resultsOutput.classList.add("error");
+    showError(resultsOutput, "Veuillez entrer un ID numérique valide");
     return;
   }
 
   try {
+    // Vérification de la connexion et du contrat
+    if (!window.ethereum) {
+      showError(resultsOutput, "MetaMask n'est pas installé");
+      return;
+    }
+
     if (!contract) {
-      throw new Error("Connectez d'abord votre wallet");
+      showError(resultsOutput, "Veuillez d'abord connecter votre wallet");
+      return;
     }
 
-    // Vérifiez d'abord si la résolution existe
-    const resolutionExists = await contract.resolutions(id).catch(() => false);
-    
-    if (!resolutionExists) {
-      throw new Error(`Aucune résolution trouvée avec l'ID ${id}`);
+    // Vérification du réseau
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== '0xaa36a7') { // Sepolia
+      showError(resultsOutput, "Veuillez vous connecter au réseau Sepolia");
+      return;
     }
 
-    // Si elle existe, récupérez les résultats
+    // Vérification de l'existence de la résolution
+    try {
+      const exists = await contract.resolutionExists(id);
+      if (!exists) {
+        showError(resultsOutput, `Aucune résolution trouvée avec l'ID ${id}`);
+        return;
+      }
+    } catch (err) {
+      console.error("Erreur de vérification:", err);
+      showError(resultsOutput, "Impossible de vérifier l'existence de la résolution");
+      return;
+    }
+
+    // Récupération des résultats
+    resultsOutput.innerText = "⏳ Chargement des résultats...";
+    resultsOutput.classList.remove("error");
+
     const res = await contract.getResults(id);
     
     if (!res || res.length !== 5) {
-      throw new Error("Format de réponse inattendu du contrat");
+      showError(resultsOutput, "Format de réponse inattendu");
+      return;
     }
 
+    // Affichage formaté des résultats
     const [title, president, pour, contre, neutre] = res;
-    
-    resultsOutput.innerText =
-      `📋 Titre: ${title || "Non spécifié"}\n\n` +
-      `👤 Président: ${president || "Non défini"}\n\n` +
-      `📊 Résultats:\n` +
-      `✅ POUR: ${pour}\n` +
-      `❌ CONTRE: ${contre}\n` +
-      `➖ NEUTRE: ${neutre}`;
-    
+    resultsOutput.innerHTML = `
+      <strong>📋 Titre:</strong> ${title || "Non spécifié"}<br><br>
+      <strong>👤 Président:</strong> ${formatAddress(president)}<br><br>
+      <strong>📊 Résultats:</strong><br>
+      ✅ <strong>POUR:</strong> ${pour}<br>
+      ❌ <strong>CONTRE:</strong> ${contre}<br>
+      ➖ <strong>NEUTRE:</strong> ${neutre}
+    `;
     resultsOutput.classList.remove("error");
 
   } catch (err) {
     console.error("Erreur complète:", err);
-    
-    let errorMsg = "Erreur lors de la récupération";
-    if (err.message.includes("resolution does not exist")) {
-      errorMsg = `Aucune résolution avec l'ID ${id} n'a été trouvée`;
-    } else if (err.message.includes("call revert exception")) {
-      errorMsg = "Le contrat a rejeté la requête - ID invalide";
-    }
-
-    resultsOutput.innerText = `❌ ${errorMsg}`;
-    resultsOutput.classList.add("error");
+    handleSpecificErrors(err, resultsOutput);
   }
+}
+
+// Fonctions utilitaires
+function showError(element, message) {
+  element.innerHTML = `❌ ${message}`;
+  element.classList.add("error");
+}
+
+function formatAddress(address) {
+  return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "Non défini";
+}
+
+function handleSpecificErrors(err, outputElement) {
+  let errorMessage = "Erreur lors de la récupération";
+  
+  if (err.code === 'CALL_EXCEPTION') {
+    errorMessage = "Le contrat a rejeté la requête (ID invalide ou problème de permission)";
+  } else if (err.message.includes('resolution does not exist')) {
+    errorMessage = "Cette résolution n'existe pas";
+  } else if (err.message.includes('Network changed')) {
+    errorMessage = "Le réseau a changé, veuillez rafraîchir la page";
+  }
+
+  showError(outputElement, errorMessage);
 }
   </script>
 </body>
