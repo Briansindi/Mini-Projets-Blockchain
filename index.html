@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vote AG - Blockchain</title>
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
   <style>
     :root {
@@ -307,195 +307,221 @@
     </footer>
   </div>
 
-<script>
-  const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
-  const contractABI = [
-    {
-      "inputs": [
-        { "internalType": "uint256", "name": "resolutionId", "type": "uint256" },
-        { "internalType": "uint8", "name": "choice", "type": "uint8" }
-      ],
-      "name": "vote",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        { "internalType": "uint256", "name": "resolutionId", "type": "uint256" }
-      ],
-      "name": "getResults",
-      "outputs": [
-        { "internalType": "string", "name": "title", "type": "string" },
-        { "internalType": "address", "name": "president", "type": "address" },
-        { "internalType": "uint256", "name": "pour", "type": "uint256" },
-        { "internalType": "uint256", "name": "contre", "type": "uint256" },
-        { "internalType": "uint256", "name": "neutre", "type": "uint256" }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        { "internalType": "uint256", "name": "resolutionId", "type": "uint256" }
-      ],
-      "name": "resolutionExists",
-      "outputs": [
-        { "internalType": "bool", "name": "", "type": "bool" }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "resolutionCount",
-      "outputs": [
-        { "internalType": "uint256", "name": "", "type": "uint256" }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        { "internalType": "string", "name": "_title", "type": "string" },
-        { "internalType": "address", "name": "_president", "type": "address" },
-        { "internalType": "address", "name": "_scrutateur", "type": "address" },
-        { "internalType": "address", "name": "_secretaire", "type": "address" }
-      ],
-      "name": "createResolution",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ];
+  <script>
+    const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
+	const contractABI = [
+  // Fonction pour voter
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "resolutionId", "type": "uint256"},
+      {"internalType": "uint8", "name": "choice", "type": "uint8"}
+    ],
+    "name": "vote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  
+  // Fonction pour obtenir les résultats
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "resolutionId", "type": "uint256"}
+    ],
+    "name": "getResults",
+    "outputs": [
+      {"internalType": "string", "name": "title", "type": "string"},
+      {"internalType": "address", "name": "president", "type": "address"},
+      {"internalType": "uint256", "name": "pour", "type": "uint256"},
+      {"internalType": "uint256", "name": "contre", "type": "uint256"},
+      {"internalType": "uint256", "name": "neutre", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  
+  // Fonction pour vérifier l'existence d'une résolution (nouveauté importante)
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "resolutionId", "type": "uint256"}
+    ],
+    "name": "resolutionExists",
+    "outputs": [
+      {"internalType": "bool", "name": "", "type": "bool"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  
+  // Fonction pour obtenir le nombre total de résolutions (essentielle)
+  {
+    "inputs": [],
+    "name": "resolutionCount",
+    "outputs": [
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  
+  // Fonction pour créer une résolution (si nécessaire)
+  {
+    "inputs": [
+      {"internalType": "string", "name": "_title", "type": "string"},
+      {"internalType": "address", "name": "_president", "type": "address"},
+      {"internalType": "address", "name": "_scrutateur", "type": "address"},
+      {"internalType": "address", "name": "_secretaire", "type": "address"}
+    ],
+    "name": "createResolution",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
-  const sepoliaConfig = {
-    chainId: "0xaa36a7", // 11155111
-    chainName: "Sepolia",
-    nativeCurrency: {
-      name: "Sepolia Ether",
-      symbol: "ETH",
-      decimals: 18
-    },
-    rpcUrls: ["https://rpc.sepolia.org"],
-    blockExplorerUrls: ["https://sepolia.etherscan.io"]
-  };
+    // Configuration du réseau Sepolia
+    const sepoliaConfig = {
+      chainId: "0xaa36a7", // 11155111 en hexa
+      chainName: "Sepolia",
+      nativeCurrency: {
+        name: "Sepolia Ether",
+        symbol: "ETH",
+        decimals: 18
+      },
+      rpcUrls: ["https://rpc.sepolia.org"],
+      blockExplorerUrls: ["https://sepolia.etherscan.io"]
+    };
 
-  let provider, signer, contract;
+    let provider, signer, contract;
 
-  async function connectWallet() {
-    try {
-      if (!window.ethereum) throw new Error("Installez MetaMask pour utiliser cette application.");
-
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      const network = await provider.getNetwork();
-
-      if (network.chainId !== 11155111) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: sepoliaConfig.chainId }]
-          });
-        } catch (switchError) {
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [sepoliaConfig]
-            });
-          } else {
-            throw switchError;
+    async function connectWallet() {
+      try {
+        if (window.ethereum) {
+          // Vérifier si on est sur Sepolia, sinon demander le switch
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          const network = await provider.getNetwork();
+          
+          if (network.chainId !== 11155111) { // ID de Sepolia
+            try {
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: sepoliaConfig.chainId }],
+              });
+            } catch (switchError) {
+              // Si le réseau n'est pas ajouté dans MetaMask, l'ajouter
+              if (switchError.code === 4902) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [sepoliaConfig],
+                });
+              } else {
+                throw switchError;
+              }
+            }
           }
+          
+          await provider.send("eth_requestAccounts", []);
+          signer = provider.getSigner();
+          const account = await signer.getAddress();
+          const accountDisplay = document.getElementById("accountDisplay");
+          accountDisplay.innerText = `Connecté en tant que: ${account.substring(0, 6)}...${account.substring(38)}`;
+          accountDisplay.classList.remove("error");
+          contract = new ethers.Contract(contractAddress, contractABI, signer);
+        } else {
+          throw new Error("Installez MetaMask pour utiliser cette application.");
         }
+      } catch (err) {
+        const accountDisplay = document.getElementById("accountDisplay");
+        accountDisplay.innerText = "Erreur: " + err.message;
+        accountDisplay.classList.add("error");
       }
-
-      await provider.send("eth_requestAccounts", []);
-      signer = provider.getSigner();
-      const account = await signer.getAddress();
-      document.getElementById("accountDisplay").innerText = `Connecté en tant que: ${account.slice(0, 6)}...${account.slice(-4)}`;
-      document.getElementById("accountDisplay").classList.remove("error");
-
-      contract = new ethers.Contract(contractAddress, contractABI, signer);
-    } catch (err) {
-      document.getElementById("accountDisplay").innerText = "Erreur: " + err.message;
-      document.getElementById("accountDisplay").classList.add("error");
     }
+
+    async function voteResolution() {
+      const id = document.getElementById("resolutionId").value;
+      const choice = document.getElementById("voteChoice").value;
+      const voteStatus = document.getElementById("voteStatus");
+      
+      if (!id) {
+        voteStatus.innerText = "Veuillez entrer un ID de résolution";
+        voteStatus.classList.add("error");
+        return;
+      }
+      
+      try {
+        voteStatus.innerText = "Envoi du vote...";
+        voteStatus.classList.remove("error");
+        
+        const tx = await contract.vote(id, choice);
+        await tx.wait();
+        
+        voteStatus.innerText = "Vote soumis avec succès!";
+        voteStatus.classList.remove("error");
+      } catch (err) {
+        voteStatus.innerText = "Erreur: " + (err.message || "Une erreur est survenue");
+        voteStatus.classList.add("error");
+      }
+    }
+
+	async function getResults() {
+  const id = document.getElementById("resultId").value;
+  const resultsOutput = document.getElementById("resultsOutput");
+  
+  if (!id) {
+    resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
+    resultsOutput.classList.add("error");
+    return;
   }
 
-  async function voteResolution() {
-    const id = document.getElementById("resolutionId").value;
-    const choice = document.getElementById("voteChoice").value;
-    const voteStatus = document.getElementById("voteStatus");
-
-    if (!id) {
-      voteStatus.innerText = "Veuillez entrer un ID de résolution";
-      voteStatus.classList.add("error");
-      return;
+  try {
+    // Vérifiez que le contrat est initialisé
+    if (!contract) {
+      throw new Error("Connectez d'abord votre wallet");
     }
 
-    try {
-      voteStatus.innerText = "Envoi du vote...";
-      voteStatus.classList.remove("error");
+    resultsOutput.innerText = "Chargement des résultats...";
+    resultsOutput.classList.remove("error");
 
-      const tx = await contract.vote(id, choice);
-      await tx.wait();
+    // Ajoutez des logs pour débogage
+    console.log("Tentative de récupération des résultats pour ID:", id);
+    
+    // Appel avec gestion d'erreur améliorée
+    const res = await contract.getResults(id).catch(err => {
+      console.error("Erreur détaillée:", err);
+      throw new Error(`Échec de la récupération: ${err.reason || err.message}`);
+    });
 
-      voteStatus.innerText = "Vote soumis avec succès!";
-      voteStatus.classList.remove("error");
-    } catch (err) {
-      voteStatus.innerText = "Erreur: " + (err.message || "Une erreur est survenue");
-      voteStatus.classList.add("error");
+    if (!res || res.length < 5) {
+      throw new Error("Format de réponse inattendu");
     }
+
+    const [title, president, pour, contre, neutre] = res;
+    
+    resultsOutput.innerText =
+      `Titre: ${title || "Non spécifié"}\n` +
+      `Président: ${president || "Non défini"}\n\n` +
+      `Votes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
+    
+    resultsOutput.classList.remove("error");
+
+  } catch (err) {
+    console.error("Erreur complète:", err);
+    
+    let errorMsg = "Erreur inattendue";
+    if (err.reason) {
+      // Erreur venant du contrat
+      errorMsg = err.reason;
+    } else if (err.message.includes("resolution does not exist")) {
+      errorMsg = "Cette résolution n'existe pas";
+    } else if (err.message.includes("CALL_EXCEPTION")) {
+      errorMsg = "Impossible de lire les résultats - vérifiez l'ID";
+    } else {
+      errorMsg = err.message;
+    }
+
+    resultsOutput.innerText = `Erreur: ${errorMsg}`;
+    resultsOutput.classList.add("error");
   }
-
-  async function getResults() {
-    const id = document.getElementById("resultId").value;
-    const resultsOutput = document.getElementById("resultsOutput");
-
-    if (!id) {
-      resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
-      resultsOutput.classList.add("error");
-      return;
     }
-
-    try {
-      if (!contract) throw new Error("Connectez d'abord votre wallet");
-
-      resultsOutput.innerText = "Chargement des résultats...";
-      resultsOutput.classList.remove("error");
-
-      const res = await contract.getResults(id).catch(err => {
-        throw new Error(`Échec de la récupération: ${err.reason || err.message}`);
-      });
-
-      if (!res || res.length < 5) {
-        throw new Error("Format de réponse inattendu");
-      }
-
-      const [title, president, pour, contre, neutre] = res;
-
-      resultsOutput.innerText =
-        `Titre: ${title || "Non spécifié"}\n` +
-        `Président: ${president || "Non défini"}\n\n` +
-        `Votes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
-
-      resultsOutput.classList.remove("error");
-
-    } catch (err) {
-      let errorMsg = "Erreur inattendue";
-      if (err.reason) {
-        errorMsg = err.reason;
-      } else if (err.message.includes("resolution does not exist")) {
-        errorMsg = "Cette résolution n'existe pas";
-      } else if (err.message.includes("CALL_EXCEPTION")) {
-        errorMsg = "Impossible de lire les résultats - vérifiez l'ID";
-      } else {
-        errorMsg = err.message;
-      }
-
-      resultsOutput.innerText = `Erreur: ${errorMsg}`;
-      resultsOutput.classList.add("error");
-    }
-  }
-</script>
+  </script>
 </body>
 </html>
