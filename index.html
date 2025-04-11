@@ -307,110 +307,51 @@
     </footer>
   </div>
 
-   <script>
-    const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
-    const contractABI = [
-      { "inputs": [ { "internalType": "uint256", "name": "resolutionId", "type": "uint256" }, { "internalType": "uint8", "name": "choice", "type": "uint8" } ], "name": "vote", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-      { "inputs": [ { "internalType": "uint256", "name": "resolutionId", "type": "uint256" } ], "name": "getResults", "outputs": [ { "internalType": "string", "name": "title", "type": "string" }, { "internalType": "address", "name": "president", "type": "address" }, { "internalType": "uint256", "name": "pour", "type": "uint256" }, { "internalType": "uint256", "name": "contre", "type": "uint256" }, { "internalType": "uint256", "name": "neutre", "type": "uint256" } ], "stateMutability": "view", "type": "function" },
-      { "inputs": [], "name": "resolutionCount", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }
-    ];
+<script>
+// ... (variables et config déjà présents)
 
-    let provider, signer, contract;
+async function createResolution() {
+  const title = document.getElementById("newTitle").value;
+  const president = document.getElementById("newPresident").value;
+  const scrutateur = document.getElementById("newScrutateur").value;
+  const secretaire = document.getElementById("newSecretaire").value;
+  const status = document.getElementById("createStatus");
 
-    async function connectWallet() {
-      if (window.ethereum) {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        const account = await signer.getAddress();
-        document.getElementById("accountDisplay").innerText = `Connecté en tant que: ${account}`;
-        contract = new ethers.Contract(contractAddress, contractABI, signer);
-      } else {
-        alert("Installez MetaMask pour utiliser cette application.");
-      }
-    }
-
-    async function voteResolution() {
-      const id = document.getElementById("resolutionId").value;
-      const choice = document.getElementById("voteChoice").value;
-      const voteStatus = document.getElementById("voteStatus");
-      voteStatus.innerText = "";
-
-      if (!id) {
-        voteStatus.innerText = "Veuillez entrer un ID de résolution";
-        voteStatus.classList.add("error");
-        return;
-      }
-      try {
-        const tx = await contract.vote(id, choice);
-        await tx.wait();
-        voteStatus.innerText = "Vote soumis avec succès!";
-        voteStatus.classList.remove("error");
-      } catch (err) {
-        voteStatus.innerText = "Erreur: " + err.message;
-        voteStatus.classList.add("error");
-      }
-    }
-
-    async function getResults() {
-  const id = document.getElementById("resultId").value;
-  const resultsOutput = document.getElementById("resultsOutput");
-
-  if (!id) {
-    resultsOutput.innerText = "Veuillez entrer un ID de résolution valide";
-    resultsOutput.classList.add("error");
+  if (!title || !president || !scrutateur || !secretaire) {
+    status.innerText = "Veuillez remplir tous les champs.";
+    status.classList.add("error");
     return;
   }
 
   try {
-    if (!contract) {
-      throw new Error("Connectez d'abord votre wallet");
-    }
-
-    // 🔍 Vérifie si la résolution existe
-    const exists = await contract.resolutionExists(id);
-    if (!exists) {
-      throw new Error("Cette résolution n'existe pas");
-    }
-
-    resultsOutput.innerText = "Chargement des résultats...";
-    resultsOutput.classList.remove("error");
-
-    const [title, president, pour, contre, neutre] = await contract.getResults(id);
-
-    resultsOutput.innerText =
-      `Titre: ${title || "Non spécifié"}\n` +
-      `Président: ${president || "Non défini"}\n\n` +
-      `Votes:\n  POUR: ${pour}\n  CONTRE: ${contre}\n  NEUTRE: ${neutre}`;
-    
-    resultsOutput.classList.remove("error");
-
+    const tx = await contract.createResolution(title, president, scrutateur, secretaire);
+    await tx.wait();
+    status.innerText = "Résolution créée avec succès !";
+    status.classList.remove("error");
   } catch (err) {
-    let errorMsg = "Erreur inattendue";
-    if (err.message.includes("résolution n'existe")) {
-      errorMsg = "Cette résolution n'existe pas";
-    } else if (err.message.includes("CALL_EXCEPTION")) {
-      errorMsg = "Impossible de lire les résultats - vérifiez l'ID";
-    } else {
-      errorMsg = err.message;
-    }
-
-    resultsOutput.innerText = `Erreur: ${errorMsg}`;
-    resultsOutput.classList.add("error");
+    status.innerText = "Erreur : " + (err.message || "Impossible de créer la résolution");
+    status.classList.add("error");
   }
 }
 
-    async function loadAvailableResolutions() {
-      const list = document.getElementById("availableResolutions");
-      try {
-        const count = await contract.resolutionCount();
-        list.innerText = `Résolutions disponibles: 1 à ${count.toString()}`;
-        list.classList.remove("error");
-      } catch (err) {
-        list.innerText = "Erreur: Impossible de récupérer la liste.";
-        list.classList.add("error");
+async function listResolutions() {
+  const out = document.getElementById("resolutionsList");
+  try {
+    const count = await contract.resolutionCount();
+    let result = `Nombre total de résolutions : ${count}\n`;
+    for (let i = 1; i <= count; i++) {
+      const r = await contract.getResults(i).catch(() => null);
+      if (r) {
+        result += `\nID ${i} → ${r[0]}\n  POUR: ${r[2]} | CONTRE: ${r[3]} | NEUTRE: ${r[4]}\n`;
       }
     }
-  </script>
+    out.innerText = result;
+    out.classList.remove("error");
+  } catch (err) {
+    out.innerText = "Erreur lors du chargement des résolutions.";
+    out.classList.add("error");
+  }
+}
+</script>
 </body>
 </html>
