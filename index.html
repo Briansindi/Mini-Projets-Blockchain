@@ -309,11 +309,74 @@
 
   <script>
     const contractAddress = "0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3";
-    const contractABI = [
-      "function vote(uint256 resolutionId, uint8 choice) public",
-      "function getResults(uint256 resolutionId) public view returns (string memory, address, uint256, uint256, uint256)"
-    ];
-
+ const contractABI = [
+  // Fonction pour voter
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "resolutionId", "type": "uint256"},
+      {"internalType": "uint8", "name": "choice", "type": "uint8"}
+    ],
+    "name": "vote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  
+  // Fonction pour obtenir les résultats
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "resolutionId", "type": "uint256"}
+    ],
+    "name": "getResults",
+    "outputs": [
+      {"internalType": "string", "name": "title", "type": "string"},
+      {"internalType": "address", "name": "president", "type": "address"},
+      {"internalType": "uint256", "name": "pour", "type": "uint256"},
+      {"internalType": "uint256", "name": "contre", "type": "uint256"},
+      {"internalType": "uint256", "name": "neutre", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  
+  // Fonction pour vérifier l'existence d'une résolution (nouveauté importante)
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "resolutionId", "type": "uint256"}
+    ],
+    "name": "resolutionExists",
+    "outputs": [
+      {"internalType": "bool", "name": "", "type": "bool"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  
+  // Fonction pour obtenir le nombre total de résolutions (essentielle)
+  {
+    "inputs": [],
+    "name": "resolutionCount",
+    "outputs": [
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  
+  // Fonction pour créer une résolution (si nécessaire)
+  {
+    "inputs": [
+      {"internalType": "string", "name": "_title", "type": "string"},
+      {"internalType": "address", "name": "_president", "type": "address"},
+      {"internalType": "address", "name": "_scrutateur", "type": "address"},
+      {"internalType": "address", "name": "_secretaire", "type": "address"}
+    ],
+    "name": "createResolution",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
     // Configuration du réseau Sepolia
     const sepoliaConfig = {
       chainId: "0xaa36a7", // 11155111 en hexa
